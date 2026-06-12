@@ -1,0 +1,71 @@
+name: ADToolkit
+options:
+  bundleIdPrefix: com.cisa
+  deploymentTarget:
+    macOS: "13.0"
+  xcodeVersion: "15.0"
+  developmentLanguage: es
+
+settings:
+  ENABLE_USER_SCRIPT_SANDBOXING: "NO"
+
+targets:
+  ADToolkit:
+    type: application
+    platform: macOS
+    sources:
+      - path: Sources/App
+        type: group
+      - path: Sources/Common
+        type: group
+      - path: Sources/GSSBridge
+        type: group
+        buildPhase:
+          type: source
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.cisa.ad-toolkit
+        INFOPLIST_FILE: Resources/App-Info.plist
+        SWIFT_OBJC_BRIDGING_HEADER: Sources/GSSBridge/include/ADToolkit-Bridging-Header.h
+        CODE_SIGN_ENTITLEMENTS: Resources/App.entitlements
+        CODE_SIGN_STYLE: Manual
+        CODE_SIGN_IDENTITY: "Developer ID Application"
+    dependencies:
+      - target: HelperTool
+        embed: true
+        embedPath: /Library/PrivilegedHelperTools/
+        codeSignOnCopy: true
+    preBuildScripts:
+      - name: "Install Helper Tool"
+        script: |
+          #!/bin/bash
+          # The helper tool is embedded and installed via SMAppService at runtime.
+          # This script ensures it's in the right place for development.
+          mkdir -p "$BUILT_PRODUCTS_DIR/$CONTENTS_FOLDER_PATH/Library/LaunchServices"
+          cp "$BUILT_PRODUCTS_DIR/HelperTool.bundle/Contents/MacOS/HelperTool" \
+             "$BUILT_PRODUCTS_DIR/$CONTENTS_FOLDER_PATH/Library/LaunchServices/"
+
+  HelperTool:
+    type: bundle
+    platform: macOS
+    productName: HelperTool
+    bundlePackageType: XPC!
+    sources:
+      - path: Sources/HelperTool
+        type: group
+      - path: Sources/Common
+        type: group
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.cisa.ad-toolkit.helper
+        INFOPLIST_FILE: Resources/HelperTool-Info.plist
+        CODE_SIGN_STYLE: Manual
+        CODE_SIGN_IDENTITY: "Developer ID Application"
+        GENERATE_INFOPLIST_FILE: NO
+        MACH_O_TYPE: mh_execute
+    postCompileScripts:
+      - name: "Embed launchd.plist"
+        script: |
+          #!/bin/bash
+          cp "$SRCROOT/Resources/launchd.plist" \
+             "$BUILT_PRODUCTS_DIR/$CONTENTS_FOLDER_PATH/launchd.plist"

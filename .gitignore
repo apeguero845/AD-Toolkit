@@ -1,0 +1,7 @@
+# AI tooling cache
+.atl/
+
+# macOS
+.DS_Store
+*.swp
+*.lock

@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>CFBundleDevelopmentRegion</key>
+    <string>es</string>
+    <key>CFBundleDisplayName</key>
+    <string>AD Toolkit</string>
+    <key>CFBundleExecutable</key>
+    <string>$(EXECUTABLE_NAME)</string>
+    <key>CFBundleIdentifier</key>
+    <string>com.cisa.ad-toolkit</string>
+    <key>CFBundleInfoDictionaryVersion</key>
+    <string>6.0</string>
+    <key>CFBundleName</key>
+    <string>AD Toolkit</string>
+    <key>CFBundlePackageType</key>
+    <string>APPL</string>
+    <key>CFBundleShortVersionString</key>
+    <string>1.0.0</string>
+    <key>CFBundleVersion</key>
+    <string>1</string>
+    <key>LSMinimumSystemVersion</key>
+    <string>13.0</string>
+    <key>NSHumanReadableCopyright</key>
+    <string>© 2026 César Iglesias S.A. Todos los derechos reservados.</string>
+    <key>NSPrincipalClass</key>
+    <string>NSApplication</string>
+    <!-- SMAppService: privileged helper tool configuration -->
+    <key>SMPrivilegedExecutables</key>
+    <dict>
+        <key>com.cisa.ad-toolkit.helper</key>
+        <string>identifier "com.cisa.ad-toolkit.helper" and anchor apple generic and certificate leaf[subject.CN] = "Developer ID Application: César Iglesias S.A."</string>
+    </dict>
+</dict>
+</plist>
