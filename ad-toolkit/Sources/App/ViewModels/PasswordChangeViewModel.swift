@@ -42,6 +42,8 @@ class PasswordChangeViewModel: ObservableObject {
     // MARK: - Actions
 
     func changePassword() {
+        defer { clearPasswords() }
+
         guard formValid else { return }
 
         // Validate password complexity before sending to KDC
@@ -99,16 +101,17 @@ class PasswordChangeViewModel: ObservableObject {
             }
 
             let xpc = XPCService()
-            let semaphore = DispatchSemaphore(value: 0)
             var localSyncSuccess = false
             var localSyncMessage = ""
 
+            let localGroup = DispatchGroup()
+            localGroup.enter()
             xpc.syncLocalPassword(username: capturedUsername, oldPassword: capturedOldPassword, newPassword: capturedNewPassword) { ok, msg in
                 localSyncSuccess = ok
                 localSyncMessage = msg ?? ""
-                semaphore.signal()
+                localGroup.leave()
             }
-            if semaphore.wait(timeout: .now() + 30) == .timedOut {
+            if localGroup.wait(timeout: .now() + 30) == .timedOut {
                 localSyncMessage = "La operación XPC tardó demasiado. Verificá que el Helper Tool esté instalado."
                 os_log(.error, "XPC syncLocalPassword timed out for user %{public}@", capturedUsername)
             }
@@ -129,12 +132,14 @@ class PasswordChangeViewModel: ObservableObject {
             var keychainSuccess = false
             var keychainMessage = ""
 
+            let keychainGroup = DispatchGroup()
+            keychainGroup.enter()
             xpc.syncKeychain(username: capturedUsername, oldPassword: capturedOldPassword, newPassword: capturedNewPassword) { ok, msg in
                 keychainSuccess = ok
                 keychainMessage = msg ?? ""
-                semaphore.signal()
+                keychainGroup.leave()
             }
-            if semaphore.wait(timeout: .now() + 30) == .timedOut {
+            if keychainGroup.wait(timeout: .now() + 30) == .timedOut {
                 keychainMessage = "La operación XPC de keychain tardó demasiado. Verificá que el Helper Tool esté instalado."
                 os_log(.error, "XPC syncKeychain timed out for user %{public}@", capturedUsername)
             }
@@ -196,6 +201,12 @@ class PasswordChangeViewModel: ObservableObject {
             return "La contraseña debe contener al menos un carácter especial (!@#$%^&* etc.)."
         }
         return nil
+    }
+
+    private func clearPasswords() {
+        oldPassword = ""
+        newPassword = ""
+        confirmPassword = ""
     }
 
     private func appendLog(_ message: String) {
