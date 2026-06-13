@@ -17,10 +17,10 @@ Chain strategy: size-exception
 
 ## Phase 4a: Build Fixes
 
-- [ ] 4a.1 Renombrar `Sources/GSSBridge/gss_bridge.c` → `gss_bridge.m` (usa `__bridge`, sintaxis ObjC)
-- [ ] 4a.2 Actualizar `project.yml` — agregar `gss_bridge.m` como fuente ObjC en target ADToolkit
-- [ ] 4a.3 Reemplazar `DispatchSemaphore` compartido en `PasswordChangeViewModel` con dos `DispatchGroup` independientes para syncLocal y syncKeychain
-- [ ] 4a.4 Agregar `defer { clearPasswords() }` en `changePassword()` para limpiar passwords en error path
+- [x] 4a.1 Renombrar `Sources/GSSBridge/gss_bridge.c` → `gss_bridge.m` (usa `__bridge`, sintaxis ObjC)
+- [x] 4a.2 Actualizar `project.yml` — agregar `gss_bridge.m` como fuente ObjC en target ADToolkit
+- [x] 4a.3 Reemplazar `DispatchSemaphore` compartido en `PasswordChangeViewModel` con dos `DispatchGroup` independientes para syncLocal y syncKeychain
+- [x] 4a.4 Agregar `defer { clearPasswords() }` en `changePassword()` para limpiar passwords en error path
 
 ## Phase 4b: Mac Testing
 
