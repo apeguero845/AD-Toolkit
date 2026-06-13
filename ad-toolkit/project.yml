@@ -28,13 +28,14 @@ targets:
         INFOPLIST_FILE: Resources/App-Info.plist
         SWIFT_OBJC_BRIDGING_HEADER: Sources/GSSBridge/include/ADToolkit-Bridging-Header.h
         CODE_SIGN_ENTITLEMENTS: Resources/App.entitlements
-        CODE_SIGN_STYLE: Manual
-        CODE_SIGN_IDENTITY: "Developer ID Application"
+        CODE_SIGN_STYLE: Automatic
+        DEVELOPMENT_TEAM: ""
     dependencies:
       - target: HelperTool
-        embed: true
-        embedPath: /Library/PrivilegedHelperTools/
-        codeSignOnCopy: true
+        embed:
+          embed: true
+          path: /Library/PrivilegedHelperTools
+          codeSignOnCopy: true
     preBuildScripts:
       - name: "Install Helper Tool"
         script: |
@@ -59,8 +60,8 @@ targets:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.cisa.ad-toolkit.helper
         INFOPLIST_FILE: Resources/HelperTool-Info.plist
-        CODE_SIGN_STYLE: Manual
-        CODE_SIGN_IDENTITY: "Developer ID Application"
+        CODE_SIGN_STYLE: Automatic
+        DEVELOPMENT_TEAM: ""
         GENERATE_INFOPLIST_FILE: NO
         MACH_O_TYPE: mh_execute
     postCompileScripts:
