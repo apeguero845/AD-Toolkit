@@ -32,10 +32,8 @@ targets:
         DEVELOPMENT_TEAM: ""
     dependencies:
       - target: HelperTool
-        embed:
-          embed: true
-          path: /Library/PrivilegedHelperTools
-          codeSignOnCopy: true
+        embed: true
+        codeSign: true
     preBuildScripts:
       - name: "Install Helper Tool"
         script: |
