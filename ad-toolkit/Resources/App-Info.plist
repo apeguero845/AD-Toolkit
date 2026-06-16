@@ -23,14 +23,14 @@
     <key>LSMinimumSystemVersion</key>
     <string>13.0</string>
     <key>NSHumanReadableCopyright</key>
-    <string>© 2026 César Iglesias S.A. Todos los derechos reservados.</string>
+    <string>© 2026 Cesar Iglesias S.A. Todos los derechos reservados.</string>
     <key>NSPrincipalClass</key>
     <string>NSApplication</string>
     <!-- SMAppService: privileged helper tool configuration -->
     <key>SMPrivilegedExecutables</key>
     <dict>
         <key>com.cisa.ad-toolkit.helper</key>
-        <string>identifier "com.cisa.ad-toolkit.helper" and anchor apple generic and certificate leaf[subject.CN] = "Developer ID Application: César Iglesias S.A."</string>
+        <string>identifier "com.cisa.ad-toolkit.helper" and anchor apple generic and certificate leaf[subject.CN] = "Developer ID Application: Cesar Iglesias S.A."</string>
     </dict>
 </dict>
 </plist>

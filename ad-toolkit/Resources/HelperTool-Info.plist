@@ -17,6 +17,6 @@
     <!-- Clients authorized to connect to this helper tool -->
     <key>SMAuthorizedClients</key>
     <array>
-        <string>identifier "com.cisa.ad-toolkit" and anchor apple generic and certificate leaf[subject.CN] = "Developer ID Application: César Iglesias S.A."</string>
+        <string>identifier "com.cisa.ad-toolkit" and anchor apple generic and certificate leaf[subject.CN] = "Developer ID Application: Cesar Iglesias S.A."</string>
     </array>
 </dict>
