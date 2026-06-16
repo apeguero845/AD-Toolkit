@@ -29,13 +29,13 @@ struct DomainJoinView: View {
             Group {
                 VStack(alignment: .leading, spacing: 12) {
                     LabeledContent("Nombre del equipo") {
-                        TextField("ej: CILMACSDTI002", text: $viewModel.computerName)
+                        TextField("ej: MAC-ADMIN-001", text: $viewModel.computerName)
                             .textFieldStyle(.roundedBorder)
                             .frame(width: 250)
                     }
 
                     LabeledContent("Unidad Organizativa (OU)") {
-                        TextField("OU=CISA_Laptops,...", text: $viewModel.ouPath)
+                        TextField("OU=Computers,DC=company,DC=local", text: $viewModel.ouPath)
                             .textFieldStyle(.roundedBorder)
                             .frame(width: 350)
                     }
@@ -44,7 +44,7 @@ struct DomainJoinView: View {
                     Divider()
 
                     LabeledContent("Usuario administrador") {
-                        TextField("ej: soportetecnicoti", text: $viewModel.adminUser)
+                        TextField("ej: admin", text: $viewModel.adminUser)
                             .textFieldStyle(.roundedBorder)
                             .frame(width: 250)
                     }
