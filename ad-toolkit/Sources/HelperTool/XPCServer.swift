@@ -77,7 +77,7 @@ class XPCServer: NSObject, ADToolkitXPCProtocol {
             reply(true, "✅ Equipo unido al dominio exitosamente.\nDominio: \(ADConfig.domain)\nOU: \(resolvedOU)")
         } else if output.contains("Container does not exist") {
             reply(false, "❌ La OU especificada no existe en AD.\n"
-                + "Formato esperado: OU=CISA_Laptops,OU=CISA_Computers,DC=cesariglesias,DC=local\n"
+                + "Formato esperado: OU=Computers,DC=company,DC=local\n"
                 + "Verificá la ruta con el equipo de infraestructura.")
         } else if output.contains("Invalid credentials") || output.contains("Error 5002") {
             reply(false, "❌ Credenciales inválidas. Verificá el nombre de usuario y contraseña del administrador de dominio.")

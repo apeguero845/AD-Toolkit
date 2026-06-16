@@ -55,7 +55,7 @@ The system MUST accept the following parameters (with sensible defaults for CISA
 
 The system MUST use the helper tool's XPC service to execute the command as root:
 ```
-dsconfigad -add cesariglesias.local -computer "{name}" -username "{admin}" -ou "{ou}" -force
+dsconfigad -add <DOMINIO> -computer "{name}" -username "{admin}" -ou "{ou}" -force
 ```
 
 After successful join, the system SHOULD present summary info: domain, computer name (normalized to lowercase by Apple), OU path.

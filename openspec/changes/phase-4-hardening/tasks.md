@@ -25,7 +25,7 @@ Chain strategy: size-exception
 ## Phase 4b: Mac Testing
 
 - [ ] 4b.1 Clonar repo en Mac, ejecutar `./setup.sh` + XcodeGen, build con Xcode
-- [ ] 4b.2 Probar domain join contra AD de CISA con OU real (`OU=CISA_Laptops,...`)
+- [ ] 4b.2 Probar domain join contra AD con OU real
 - [ ] 4b.3 Probar password change via GSS.framework contra KDC real (puerto 464)
 - [ ] 4b.4 Probar sync de cuenta local + keychain post-cambio
 - [ ] 4b.5 Verificar export de session log

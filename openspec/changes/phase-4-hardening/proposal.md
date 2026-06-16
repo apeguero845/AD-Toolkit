@@ -83,7 +83,7 @@ Three sub-phases:
 ## Success Criteria
 
 - [ ] `gss_bridge.m` compila sin errores en Xcode
-- [ ] Domain join funciona con OU de CISA (`OU=CISA_Laptops,...`)
+- [ ] Domain join funciona con la OU configurada
 - [ ] Password change via GSS.framework funciona contra AD real
 - [ ] Local account + keychain sincronizados post-cambio
 - [ ] Mensajes de error reflejan resultados reales de AD (GPO, credenciales)

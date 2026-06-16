@@ -14,7 +14,7 @@ The system MUST authenticate to the Kerberos KDC using the user's current creden
 
 The system MUST validate that the new password meets AD complexity policies (GPO) before sending to the server.
 
-The system SHALL use `GSSCreateName()` with the format `userPrincipal@REALM` (e.g., `usuario@CESARIGLESIAS.LOCAL`).
+The system SHALL use `GSSCreateName()` with the format `userPrincipal@REALM` (e.g., `usuario@COMPANY.LOCAL`).
 
 #### Scenario: Cambio exitoso con sync completo
 

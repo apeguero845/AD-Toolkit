@@ -29,7 +29,7 @@ class KerberosService {
     ///
     /// - Parameters:
     ///   - username: The user's SAM account name (without domain)
-    ///   - domain: The AD domain in uppercase (e.g., "CESARIGLESIAS.LOCAL")
+    ///   - domain: The AD domain in uppercase (e.g., "COMPANY.LOCAL")
     ///   - oldPassword: Current password
     ///   - newPassword: New password
     /// - Returns: Result with success status and error details if any

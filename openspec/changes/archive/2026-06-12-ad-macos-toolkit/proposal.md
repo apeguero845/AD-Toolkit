@@ -99,7 +99,7 @@ Referencia principal: [xcreds (Twocanoes)](https://github.com/twocanoes/xcreds) 
 
 - [ ] Password change funciona cumpliendo políticas GPO de complejidad de CISA
 - [ ] Cuenta mobile local + login keychain quedan sincronizados post-cambio
-- [ ] Domain join funciona con la OU `OU=CISA_Laptops,OU=CISA_Computers,DC=cesariglesias,DC=local`
+- [ ] Domain join funciona con la OU configurada
 - [ ] Cada error conocido (DNS, time, OU, duplicado) muestra mensaje accionable al técnico
 - [ ] Los logs de la sesión son exportables para auditoría de soporte
 - [ ] Toda la funcionalidad opera sin intervención del usuario fuera de la GUI de la app

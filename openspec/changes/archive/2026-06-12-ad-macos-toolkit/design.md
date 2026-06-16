@@ -44,7 +44,7 @@ Aplicación nativa de macOS con arquitectura de 3 capas:
 User enters passwords → SwiftUI App
     ↓
 GSS Bridge (C/Obj-C)
-    ├── GSSCreateName("usuario@CESARIGLESIAS.LOCAL")
+    ├── GSSCreateName("usuario@COMPANY.LOCAL")
     ├── gss_aapl_change_password(old, new, name)
     └── → Success / Error
     ↓ (if success)

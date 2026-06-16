@@ -10,7 +10,7 @@ The system MUST authenticate to the Kerberos KDC using the user's current creden
 
 The system MUST validate that the new password meets AD complexity policies (GPO) before sending to the server.
 
-The system SHALL use `GSSCreateName()` with the format `userPrincipal@REALM` (e.g., `usuario@CESARIGLESIAS.LOCAL`).
+The system SHALL use `GSSCreateName()` with the format `userPrincipal@REALM` (e.g., `usuario@COMPANY.LOCAL`).
 
 The system SHOULD map specific GSS minor status codes from real AD responses to distinct user-facing messages, rather than falling back to a generic GSS error.
 (Previously: Generic GSS error mapping; refined to map real AD error codes post-testing)

@@ -6,7 +6,7 @@ context: >
   República Dominicana). Native SwiftUI app with GSS.framework (Kerberos),
   SMAppService + XPC privileged helper tool, dsconfigad, and sysadminctl.
   Covers domain join automation, AD password change with local account
-  and keychain sync. Targets cesariglesias.local domain, macOS 13+.
+  and keychain sync. macOS 13+.
 
 strict_tdd: false
 test_runner: null

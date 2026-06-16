@@ -136,7 +136,7 @@ struct DiagnosticsView: View {
     private func diagHint(for key: String, value: String) -> String {
         if value == "pass" || value == "bound" { return "" }
         switch key {
-        case "dns": return "No se resuelve cesariglesias.local"
+        case "dns": return "No se resuelve el dominio AD"
         case "time": return "Diferencia horaria mayor a 5 minutos"
         case "ldap": return "No se puede contactar el puerto LDAP"
         case "kdc": return "No se puede contactar el KDC (puerto 464)"

@@ -23,7 +23,7 @@ El flujo de cambio de contraseña tiene estas limitaciones:
 |--------|-----------|----------|
 | `dscl . -passwd` | Error -14165 | GPO complexity policy |
 | `sysadminctl` | "Éxito" local | **NO** cambia en AD — desincroniza |
-| `kpasswd usuario@CESARIGLESIAS.LOCAL` | ✅ Funciona | Interactivo (abre /dev/tty) |
+| `kpasswd usuario@COMPANY.LOCAL` | ✅ Funciona | Interactivo (abre /dev/tty) |
 | System Settings > Users & Groups | ✅ Funciona | Requiere conexión al dominio |
 
 La causa raíz: el AD tiene políticas estrictas (posiblemente LDAPS requerido) y las herramientas de macOS no pueden negociar correctamente el cambio. `kpasswd` con Kerberos es el único camino confiable por CLI.
