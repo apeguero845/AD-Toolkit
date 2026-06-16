@@ -42,6 +42,25 @@ targets:
           mkdir -p "$BUILT_PRODUCTS_DIR/$CONTENTS_FOLDER_PATH/Library/LaunchServices"
           cp "$BUILT_PRODUCTS_DIR/HelperTool.bundle/Contents/MacOS/HelperTool" \
              "$BUILT_PRODUCTS_DIR/$CONTENTS_FOLDER_PATH/Library/LaunchServices/"
+        basedOnDependencyAnalysis: false
+        inputFileLists:
+          - "$BUILT_PRODUCTS_DIR/HelperTool.bundle/Contents/MacOS/HelperTool"
+        outputFileLists:
+          - "$BUILT_PRODUCTS_DIR/$CONTENTS_FOLDER_PATH/Library/LaunchServices/HelperTool"
+    postBuildScripts:
+      - name: "Copy launchd.plist for SMAppService"
+        script: |
+          #!/bin/bash
+          # SMAppService.daemonService(plistName:) expects the plist in
+          # Contents/Library/LaunchDaemons/ inside the main app bundle.
+          mkdir -p "$BUILT_PRODUCTS_DIR/$CONTENTS_FOLDER_PATH/Library/LaunchDaemons"
+          cp "$SRCROOT/Resources/launchd.plist" \
+             "$BUILT_PRODUCTS_DIR/$CONTENTS_FOLDER_PATH/Library/LaunchDaemons/com.cisa.ad-toolkit.helper.plist"
+        basedOnDependencyAnalysis: false
+        inputFileLists:
+          - "$SRCROOT/Resources/launchd.plist"
+        outputFileLists:
+          - "$BUILT_PRODUCTS_DIR/$CONTENTS_FOLDER_PATH/Library/LaunchDaemons/com.cisa.ad-toolkit.helper.plist"
 
   HelperTool:
     type: bundle
@@ -53,7 +72,6 @@ targets:
         type: group
       - path: Sources/Common
         type: group
-      - path: Resources/launchd.plist
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.cisa.ad-toolkit.helper
