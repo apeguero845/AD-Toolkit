@@ -6,9 +6,9 @@
 Actualmente se usa `dsconfigad` manualmente desde terminal:
 
 ```bash
-sudo dsconfigad -add cesariglesias.local -computer "CILMACSDTI002" \
-  -username "apeguero" \
-  -ou "OU=CISA_Laptops,OU=CISA_Computers,DC=cesariglesias,DC=local" -force
+sudo dsconfigad -add <DOMINIO> -computer "<NOMBRE_EQUIPO>" \
+  -username "<USUARIO_ADMIN>" \
+  -ou "<OU_DESTINO>" -force
 ```
 
 El comando funciona pero requiere que soporte:
@@ -26,7 +26,7 @@ El flujo de cambio de contraseña tiene estas limitaciones:
 | `kpasswd usuario@CESARIGLESIAS.LOCAL` | ✅ Funciona | Interactivo (abre /dev/tty) |
 | System Settings > Users & Groups | ✅ Funciona | Requiere conexión al dominio |
 
-La causa raíz: AD de CISA tiene políticas estrictas (posiblemente LDAPS requerido) y las herramientas de macOS no pueden negociar correctamente el cambio. `kpasswd` con Kerberos es el único camino confiable por CLI.
+La causa raíz: el AD tiene políticas estrictas (posiblemente LDAPS requerido) y las herramientas de macOS no pueden negociar correctamente el cambio. `kpasswd` con Kerberos es el único camino confiable por CLI.
 
 ## Affected Areas
 

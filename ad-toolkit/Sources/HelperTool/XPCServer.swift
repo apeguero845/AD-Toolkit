@@ -17,22 +17,17 @@ class XPCServer: NSObject, ADToolkitXPCProtocol {
 
     // MARK: - Configuration Constants
 
-    private let domain = "cesariglesias.local"
-    private let domainUpper = "CESARIGLESIAS.LOCAL"
-    private let dcIP = "172.16.7.250"
-    private let defaultOU = "OU=CISA_Laptops,OU=CISA_Computers,DC=cesariglesias,DC=local"
-
     // MARK: - Diagnostics
 
     func runDiagnostics(reply: @escaping ([String: String]) -> Void) {
         var results: [String: String] = [:]
 
         // 1. DNS resolution via SRV record (authoritative for AD)
-        let dnsSRV = run("host -t SRV _ldap._tcp.dc._msdcs.\(domain)")
+        let dnsSRV = run("host -t SRV _ldap._tcp.dc._msdcs.\(ADConfig.domain)")
         results["dns"] = dnsSRV == nil ? "fail" : "pass"
 
         // 2. Time sync check
-        let timeResult = run("sntp \(dcIP)")
+        let timeResult = run("sntp \(ADConfig.dcIP)")
         results["time"] = (timeResult?.contains("adjust") ?? false ||
                            timeResult?.contains("step") ?? false ||
                            timeResult?.contains("no change") ?? false) ? "pass" : "fail"
@@ -42,7 +37,7 @@ class XPCServer: NSObject, ADToolkitXPCProtocol {
         results["ldap"] = (ldapResult?.contains("namingContexts") ?? false) ? "pass" : "fail"
 
         // 4. Kerberos KDC port check (tcp/464)
-        let kdcResult = run("nc -z -w 3 \(dcIP) 464 2>&1")
+        let kdcResult = run("nc -z -w 3 \(ADConfig.dcIP) 464 2>&1")
         results["kdc"] = (kdcResult?.contains("succeeded") ?? false || kdcResult?.isEmpty ?? false) ? "pass" : "fail"
 
         // 5. Current bind status
@@ -59,12 +54,12 @@ class XPCServer: NSObject, ADToolkitXPCProtocol {
                     adminUser: String,
                     adminPass: String,
                     reply: @escaping (Bool, String?) -> Void) {
-        let resolvedOU = ou.isEmpty ? defaultOU : ou
+        let resolvedOU = ou.isEmpty ? ADConfig.defaultOU : ou
 
         // Pass the admin password via environment variable (not CLI arg)
         let env = ["ADMIN_PASSWORD": adminPass]
         let result = runWithEnv(
-            "dsconfigad -add \(domain) "
+            "dsconfigad -add \(ADConfig.domain) "
             + "-computer '\(computerName.escapingSingleQuotes)' "
             + "-username '\(adminUser.escapingSingleQuotes)' "
             + "-ou '\(resolvedOU.escapingSingleQuotes)' "
@@ -79,7 +74,7 @@ class XPCServer: NSObject, ADToolkitXPCProtocol {
         }
 
         if output.contains("success") || output.contains("already") {
-            reply(true, "✅ Equipo unido al dominio exitosamente.\nDominio: \(domain)\nOU: \(resolvedOU)")
+            reply(true, "✅ Equipo unido al dominio exitosamente.\nDominio: \(ADConfig.domain)\nOU: \(resolvedOU)")
         } else if output.contains("Container does not exist") {
             reply(false, "❌ La OU especificada no existe en AD.\n"
                 + "Formato esperado: OU=CISA_Laptops,OU=CISA_Computers,DC=cesariglesias,DC=local\n"

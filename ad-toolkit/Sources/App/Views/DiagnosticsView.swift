@@ -109,7 +109,7 @@ struct DiagnosticsView: View {
                 }
                 if viewModel.diagnosticsResults["time"] == "fail" {
                     DiagnosticStep(number: 2,
-                                    text: "Sincronizar hora: `sudo sntp -sS 172.16.7.250`")
+                                    text: "Sincronizar hora: `sudo sntp -sS <IP_DEL_DC>`")
                 }
                 if viewModel.diagnosticsResults["ldap"] == "fail" || viewModel.diagnosticsResults["kdc"] == "fail" {
                     DiagnosticStep(number: 3,

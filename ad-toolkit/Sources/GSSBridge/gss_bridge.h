@@ -32,7 +32,7 @@ typedef struct {
 /// with the KDC via the Kerberos protocol (port 464/tcp).
 ///
 /// - Parameters:
-///   - userPrincipal: Full user principal (e.g., "user@CESARIGLESIAS.LOCAL")
+///   - userPrincipal: Full user principal (e.g., "user@COMPANY.LOCAL")
 ///   - oldPassword: Current password
 ///   - newPassword: New password (must meet AD GPO complexity requirements)
 /// - Returns: A `gss_password_change_result_t` struct.

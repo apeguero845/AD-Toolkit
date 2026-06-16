@@ -2,14 +2,14 @@
 
 ## Purpose
 
-Permitir al equipo de soporte unir una Mac al dominio Active Directory de CISA de forma automatizada, con diagnóstico previo, feedback claro de cada paso, y manejo de los errores conocidos documentados en el historial de soporte.
+Permitir al equipo de soporte unir una Mac al dominio Active Directory de forma automatizada, con diagnóstico previo, feedback claro de cada paso, y manejo de los errores conocidos documentados.
 
 ## Requirements
 
 ### Requirement: Diagnóstico pre-vuelo
 
 Before attempting to join the domain, the system MUST run pre-flight checks:
-1. DNS resolution: resolve `cesariglesias.local` and `_ldap._tcp.dc._msdcs.cesariglesias.local`
+1. DNS resolution: resolve the AD domain
 2. Time sync: compare system time with the domain controller
 3. Network connectivity: reach the KDC on port 464 and LDAP on port 389
 4. Existing bind: check if the computer is already bound to AD
@@ -29,7 +29,7 @@ If ANY check fails, the system SHALL NOT proceed with domain join and MUST show 
 
 #### Scenario: DNS resolution fails
 
-- GIVEN the Mac cannot resolve `cesariglesias.local`
+- GIVEN the Mac cannot resolve the AD domain
 - WHEN the DNS check runs
 - THEN the check shows a red X
 - AND the app SHOWs: "No se puede resolver el dominio. Verificá que el DNS esté configurado correctamente en Redes > DNS."
@@ -40,16 +40,16 @@ If ANY check fails, the system SHALL NOT proceed with domain join and MUST show 
 - GIVEN the Mac's clock differs from the DC by more than 5 minutes
 - WHEN the time check runs
 - THEN the check shows a red X
-- AND the app SHOWs: "El reloj del Mac está desincronizado. Diferencia: X minutos. Se recomienda sincronizar con: `sudo sntp -sS 172.16.7.250`"
+- AND the app SHOWs: "El reloj del Mac está desincronizado. Diferencia: X minutos. Se recomienda sincronizar con: `sudo sntp -sS <IP_DEL_DC>`"
 - AND optionally offers a "Sincronizar ahora" button that runs `sntp`
 
 ### Requirement: Unión al dominio con dsconfigad
 
-The system MUST join the Mac to `cesariglesias.local` using `dsconfigad` executed via the Privileged Helper Tool (root).
+The system MUST join the Mac to the configured AD domain using `dsconfigad` executed via the Privileged Helper Tool (root).
 
 The system MUST accept the following parameters (with sensible defaults for CISA):
 - **Computer name**: defaults to current hostname, editable
-- **OU path**: defaults to `OU=CISA_Laptops,OU=CISA_Computers,DC=cesariglesias,DC=local`, editable
+- **OU path**: defaults to the configured AD OU, editable
 - **Admin username**: text input for AD admin account
 - **Admin password**: secure text input
 
@@ -76,7 +76,7 @@ After successful join, the system SHOULD present summary info: domain, computer 
 - WHEN dsconfigad runs with `-ou "OU=Invalid,DC=cesariglesias,DC=local"`
 - THEN dsconfigad returns "Container does not exist" error
 - AND the app SHOWs: "La OU especificada no existe. Verificá la ruta con el equipo de infraestructura."
-- AND suggests the correct OU format: `OU=CISA_Laptops,OU=CISA_Computers,DC=cesariglesias,DC=local`
+- AND suggests the correct OU format (configurable per environment)
 
 #### Scenario: Credenciales inválidas
 

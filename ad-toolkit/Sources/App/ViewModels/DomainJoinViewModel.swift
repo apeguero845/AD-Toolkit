@@ -12,7 +12,7 @@ class DomainJoinViewModel: ObservableObject {
     // MARK: - Published Properties
 
     @Published var computerName: String = currentHostName()
-    @Published var ouPath: String = "OU=CISA_Laptops,OU=CISA_Computers,DC=cesariglesias,DC=local"
+    @Published var ouPath: String = ADConfig.defaultOU
     @Published var adminUser: String = ""
     @Published var adminPass: String = ""
 
@@ -21,7 +21,7 @@ class DomainJoinViewModel: ObservableObject {
     @Published var isSuccess = false
     @Published var diagnosticsResults: [String: String] = [:]
 
-    let domain = "cesariglesias.local"
+    let domain = ADConfig.domain
 
     // MARK: - Computed Properties
 

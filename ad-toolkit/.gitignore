@@ -16,3 +16,6 @@ Package.resolved
 .DS_Store
 *.swp
 *.lock
+
+# SDD
+.atl/

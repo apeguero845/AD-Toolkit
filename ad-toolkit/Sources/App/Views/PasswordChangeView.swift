@@ -35,7 +35,7 @@ struct PasswordChangeView: View {
                     }
 
                     LabeledContent("Dominio") {
-                        Text("CESARIGLESIAS.LOCAL")
+                        Text(ADConfig.domainUpper)
                             .foregroundColor(.secondary)
                     }
 

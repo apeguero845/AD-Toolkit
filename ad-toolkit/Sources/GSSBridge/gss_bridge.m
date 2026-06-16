@@ -33,7 +33,7 @@ gss_password_change_result_t gss_change_password(
     }
 
     // Create GSS name from user principal string
-    // Format: userPrincipal@REALM (e.g., "jperez@CESARIGLESIAS.LOCAL")
+    // Format: userPrincipal@REALM (e.g., "user@COMPANY.LOCAL")
     CFStringRef principalCF = CFStringCreateWithCString(kCFAllocatorDefault,
                                                         userPrincipal,
                                                         kCFStringEncodingUTF8);

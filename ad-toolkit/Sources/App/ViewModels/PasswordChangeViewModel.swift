@@ -37,7 +37,7 @@ class PasswordChangeViewModel: ObservableObject {
         passwordsMatch
     }
 
-    private let domain = "CESARIGLESIAS.LOCAL"
+    private let domain = ADConfig.domainUpper
 
     // MARK: - Actions
 
