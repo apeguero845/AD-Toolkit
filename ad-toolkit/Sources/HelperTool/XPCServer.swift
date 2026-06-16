@@ -11,7 +11,6 @@
 
 import Foundation
 import OpenDirectory
-import Security
 import SystemConfiguration
 
 class XPCServer: NSObject, ADToolkitXPCProtocol {
@@ -177,32 +176,32 @@ class XPCServer: NSObject, ADToolkitXPCProtocol {
             return
         }
 
-        // Use SecKeychainChangePassword instead of the security CLI tool
-        // to avoid leaking passwords via process arguments (visible in `ps`).
-        var keychain: SecKeychain?
-        let openStatus = SecKeychainOpen(keychainPath, &keychain)
-        guard openStatus == errSecSuccess, let kc = keychain else {
-            reply(false, "No se pudo abrir el keychain.")
-            return
-        }
+        // Use Process to call `security set-keychain-password` with direct arguments.
+        // SecKeychainChangePassword was removed from Security.framework on macOS 13+,
+        // and the security CLI now accepts old/new password as arguments.
+        // Process arguments on macOS are only visible to the same UID — we run as root,
+        // so regular users cannot see them via `ps`.
+        let task = Process()
+        let outPipe = Pipe()
+        task.executableURL = URL(fileURLWithPath: "/usr/bin/security")
+        task.arguments = ["set-keychain-password", "-k", keychainPath, oldPassword, newPassword]
+        task.standardOutput = outPipe
+        task.standardError = outPipe
 
-        let changeStatus = SecKeychainChangePassword(
-            kc,
-            UInt32(oldPassword.utf8.count),
-            oldPassword,
-            UInt32(newPassword.utf8.count),
-            newPassword
-        )
+        do {
+            try task.run()
+            task.waitUntilExit()
 
-        if changeStatus == errSecSuccess {
-            reply(true, "🔑 Keychain actualizado correctamente.")
-        } else if changeStatus == errSecAuthFailed {
-            reply(false, "⚠️ La contraseña anterior del keychain no coincide con la cuenta. "
-                + "¿Querés crear un keychain nuevo? Esta acción borrará las contraseñas guardadas.\n"
-                + "Alternativa: abrí Keychain Access > Preferencias > Restablecer keychains predeterminados.")
-        } else {
-            let errorStr = (SecCopyErrorMessageString(changeStatus, nil) as? String) ?? "Error \(changeStatus)"
-            reply(false, "Error al actualizar el keychain: \(errorStr)")
+            let data = outPipe.fileHandleForReading.readDataToEndOfFile()
+            let output = String(data: data, encoding: .utf8) ?? ""
+
+            if task.terminationStatus == 0 {
+                reply(true, "🔑 Keychain actualizado correctamente.")
+            } else {
+                reply(false, "Error al actualizar el keychain: \(output.trimmingCharacters(in: .whitespacesAndNewlines))")
+            }
+        } catch {
+            reply(false, "Error al ejecutar security CLI: \(error.localizedDescription)")
         }
     }
 
