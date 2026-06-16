@@ -20,8 +20,7 @@ targets:
         type: group
       - path: Sources/GSSBridge
         type: group
-        buildPhase:
-          type: source
+        buildPhase: source
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.cisa.ad-toolkit
