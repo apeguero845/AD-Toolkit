@@ -19,7 +19,7 @@ struct ADToolkitApp: App {
 
     init() {
         do {
-            try SMAppService.daemonService(plistName: "com.cisa.ad-toolkit.helper").register()
+            try SMAppService.daemon(plistName: "com.cisa.ad-toolkit.helper").register()
         } catch {
             os_log(.error, "Failed to register helper daemon: %{public}@", error.localizedDescription)
         }

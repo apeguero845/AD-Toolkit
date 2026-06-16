@@ -49,7 +49,7 @@ targets:
       - name: "Copy launchd.plist for SMAppService"
         script: |
           #!/bin/bash
-          # SMAppService.daemonService(plistName:) expects the plist in
+          # SMAppService.daemon(plistName:) expects the plist in
           # Contents/Library/LaunchDaemons/ inside the main app bundle.
           mkdir -p "$BUILT_PRODUCTS_DIR/$CONTENTS_FOLDER_PATH/Library/LaunchDaemons"
           cp "$SRCROOT/Resources/launchd.plist" \
