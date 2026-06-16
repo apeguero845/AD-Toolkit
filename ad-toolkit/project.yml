@@ -33,7 +33,7 @@ targets:
       - target: HelperTool
         embed: true
         codeSign: true
-    preBuildScripts:
+    postBuildScripts:
       - name: "Install Helper Tool"
         script: |
           #!/bin/bash
@@ -42,7 +42,10 @@ targets:
           mkdir -p "$BUILT_PRODUCTS_DIR/$CONTENTS_FOLDER_PATH/Library/LaunchServices"
           cp "$BUILT_PRODUCTS_DIR/HelperTool.bundle/Contents/MacOS/HelperTool" \
              "$BUILT_PRODUCTS_DIR/$CONTENTS_FOLDER_PATH/Library/LaunchServices/"
-    postBuildScripts:
+        inputFiles:
+          - $(BUILT_PRODUCTS_DIR)/HelperTool.bundle/Contents/MacOS/HelperTool
+        outputFiles:
+          - $(BUILT_PRODUCTS_DIR)/$(CONTENTS_FOLDER_PATH)/Library/LaunchServices/HelperTool
       - name: "Copy launchd.plist for SMAppService"
         script: |
           #!/bin/bash
@@ -51,6 +54,10 @@ targets:
           mkdir -p "$BUILT_PRODUCTS_DIR/$CONTENTS_FOLDER_PATH/Library/LaunchDaemons"
           cp "$SRCROOT/Resources/launchd.plist" \
              "$BUILT_PRODUCTS_DIR/$CONTENTS_FOLDER_PATH/Library/LaunchDaemons/com.cisa.ad-toolkit.helper.plist"
+        inputFiles:
+          - $(SRCROOT)/Resources/launchd.plist
+        outputFiles:
+          - $(BUILT_PRODUCTS_DIR)/$(CONTENTS_FOLDER_PATH)/Library/LaunchDaemons/com.cisa.ad-toolkit.helper.plist
 
   HelperTool:
     type: bundle
