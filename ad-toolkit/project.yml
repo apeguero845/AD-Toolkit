@@ -61,6 +61,8 @@ targets:
         DEVELOPMENT_TEAM: ""
         GENERATE_INFOPLIST_FILE: NO
         MACH_O_TYPE: mh_execute
+    dependencies:
+      - sdk: Security.framework
     postCompileScripts:
       - name: "Embed launchd.plist"
         script: |
