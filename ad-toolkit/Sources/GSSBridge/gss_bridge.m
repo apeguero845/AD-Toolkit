@@ -108,7 +108,7 @@ gss_password_change_result_t gss_change_password(
                     "Verificá que la contraseña actual sea correcta.");
             } else {
                 // Preserve the specific CFError description and append guidance
-                char *original = result.error_message;
+                const char *original = result.error_message;
                 size_t len = strlen(original) + 100;
                 char *enhanced = (char *)malloc(len);
                 snprintf(enhanced, len, "%s — Verificá que la contraseña actual sea correcta.", original);
