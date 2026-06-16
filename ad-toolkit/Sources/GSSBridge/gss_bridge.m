@@ -42,7 +42,7 @@ gss_password_change_result_t gss_change_password(
         return result;
     }
 
-    gss_name_t gssName = GSSCreateName((__bridge CFTypeRef)principalCF,
+    gss_name_t gssName = GSSCreateName(principalCF,
                                         GSS_C_NT_USER_NAME,
                                         NULL);
     CFRelease(principalCF);
