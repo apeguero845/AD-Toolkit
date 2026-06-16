@@ -141,7 +141,7 @@ class XPCServer: NSObject, ADToolkitXPCProtocol {
             // the local mobile account password. At sync time the local
             // account still has the old password, so this works without
             // needing special root privileges via the auth authority.
-            try record.changePassword(oldPassword, to: newPassword)
+            try record.changePassword(oldPassword, toPassword: newPassword)
 
             reply(true, "Contraseña local sincronizada correctamente.")
         } catch {

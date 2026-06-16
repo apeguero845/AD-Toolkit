@@ -53,6 +53,7 @@ targets:
         type: group
       - path: Sources/Common
         type: group
+      - path: Resources/launchd.plist
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.cisa.ad-toolkit.helper
@@ -63,9 +64,3 @@ targets:
         MACH_O_TYPE: mh_execute
     dependencies:
       - sdk: Security.framework
-    postCompileScripts:
-      - name: "Embed launchd.plist"
-        script: |
-          #!/bin/bash
-          cp "$SRCROOT/Resources/launchd.plist" \
-             "$BUILT_PRODUCTS_DIR/$CONTENTS_FOLDER_PATH/launchd.plist"
