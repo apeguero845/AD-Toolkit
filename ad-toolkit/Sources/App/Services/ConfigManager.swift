@@ -9,6 +9,7 @@
 //
 
 import Foundation
+import os.lock
 
 /// Manages the runtime AD configuration with in-memory caching and XPC proxying.
 ///
@@ -16,9 +17,9 @@ import Foundation
 /// On first access, loadConfig() should be called at app launch to populate
 /// the cache from the system Keychain.
 ///
-/// Marked @MainActor because `cachedConfig` is read from SwiftUI views
-/// and written from Task contexts — the actor guarantees single-threaded access.
-@MainActor
+/// Thread safety for `cachedConfig` is provided by `os_unfair_lock`,
+/// allowing safe access from both MainActor contexts (SwiftUI views)
+/// and background Task contexts.
 class ConfigManager {
 
     // MARK: - Singleton
@@ -29,7 +30,8 @@ class ConfigManager {
 
     // MARK: - Private State
 
-    private var cachedConfig: ADConfigModel?
+    private var lock = os_unfair_lock_s()
+    private var _cachedConfig: ADConfigModel?
     private let xpcService = XPCService()
     private let decoder = JSONDecoder()
     private let encoder = JSONEncoder()
@@ -41,12 +43,15 @@ class ConfigManager {
     /// Consumers should use the fallback pattern:
     /// `ConfigManager.shared.config?.domain ?? ADConfig.domain`
     var config: ADConfigModel? {
-        return cachedConfig
+        os_unfair_lock_lock(&lock)
+        let value = _cachedConfig
+        os_unfair_lock_unlock(&lock)
+        return value
     }
 
     /// Returns `true` when a config has been cached in memory.
     var isConfigured: Bool {
-        return cachedConfig != nil
+        return config != nil
     }
 
     /// Load the AD configuration from the system Keychain via XPC.
@@ -65,12 +70,16 @@ class ConfigManager {
         }
 
         guard let data = data else {
-            cachedConfig = nil
+            os_unfair_lock_lock(&lock)
+            _cachedConfig = nil
+            os_unfair_lock_unlock(&lock)
             return nil
         }
 
         let model = try decoder.decode(ADConfigModel.self, from: data)
-        cachedConfig = model
+        os_unfair_lock_lock(&lock)
+        _cachedConfig = model
+        os_unfair_lock_unlock(&lock)
         return model
     }
 
@@ -111,7 +120,9 @@ class ConfigManager {
             throw ConfigError.saveFailed(errorString ?? "Error desconocido al guardar la configuración.")
         }
 
-        cachedConfig = model
+        os_unfair_lock_lock(&lock)
+        _cachedConfig = model
+        os_unfair_lock_unlock(&lock)
     }
 
     // MARK: - Error Types
