@@ -12,7 +12,7 @@ class DomainJoinViewModel: ObservableObject {
     // MARK: - Published Properties
 
     @Published var computerName: String = currentHostName()
-    @Published var ouPath: String = ADConfig.defaultOU
+    @Published var ouPath: String = ConfigManager.shared.config?.defaultOU ?? ADConfig.defaultOU
     @Published var adminUser: String = ""
     @Published var adminPass: String = ""
 
@@ -21,7 +21,10 @@ class DomainJoinViewModel: ObservableObject {
     @Published var isSuccess = false
     @Published var diagnosticsResults: [String: String] = [:]
 
-    let domain = ADConfig.domain
+    /// The AD domain, read from runtime config with fallback to compile-time constant.
+    var domain: String {
+        ConfigManager.shared.config?.domain ?? ADConfig.domain
+    }
 
     // MARK: - Computed Properties
 

@@ -35,7 +35,7 @@ struct PasswordChangeView: View {
                     }
 
                     LabeledContent("Dominio") {
-                        Text(ADConfig.domainUpper)
+                        Text(ConfigManager.shared.config?.domainUpper ?? ADConfig.domainUpper)
                             .foregroundColor(.secondary)
                     }
 

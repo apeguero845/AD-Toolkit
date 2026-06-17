@@ -16,6 +16,7 @@ import OSLog
 @main
 struct ADToolkitApp: App {
     @State private var selectedTab = 0
+    @State private var showConfigSheet = false
 
     init() {
         do {
@@ -29,6 +30,17 @@ struct ADToolkitApp: App {
         WindowGroup {
             ContentView(selectedTab: $selectedTab)
                 .frame(minWidth: 600, minHeight: 500)
+                .sheet(isPresented: $showConfigSheet) {
+                    ConfigSetupView(isPresented: $showConfigSheet)
+                }
+                .task {
+                    // Load stored config from Keychain on launch — non-blocking.
+                    // If no config is found, the ConfigSetupView sheet will appear.
+                    try? await ConfigManager.shared.loadConfig()
+                    if !ConfigManager.shared.isConfigured {
+                        showConfigSheet = true
+                    }
+                }
         }
         .windowResizability(.contentSize)
     }

@@ -89,6 +89,26 @@ struct DiagnosticsView: View {
                         }
                         .padding(.vertical, 4)
                     }
+
+                    // Show detected config when bound
+                    if viewModel.diagnosticsResults["bind"] == "bound",
+                       let config = ConfigManager.shared.config {
+                        Divider()
+                        VStack(alignment: .leading, spacing: 4) {
+                            Text("Configuración detectada")
+                                .font(.subheadline)
+                                .fontWeight(.semibold)
+                            Text("Dominio: \(config.domain)")
+                                .font(.caption)
+                            Text("DC: \(config.dcHost)")
+                                .font(.caption)
+                            if !config.defaultOU.isEmpty {
+                                Text("OU: \(config.defaultOU)")
+                                    .font(.caption)
+                            }
+                        }
+                        .padding(.vertical, 4)
+                    }
                 }
                 .padding()
                 .background(

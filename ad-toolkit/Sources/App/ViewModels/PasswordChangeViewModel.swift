@@ -37,7 +37,10 @@ class PasswordChangeViewModel: ObservableObject {
         passwordsMatch
     }
 
-    private let domain = ADConfig.domainUpper
+    /// The AD domain in uppercase, read from runtime config with fallback to compile-time constant.
+    private var domain: String {
+        ConfigManager.shared.config?.domainUpper ?? ADConfig.domainUpper
+    }
 
     // MARK: - Actions
 

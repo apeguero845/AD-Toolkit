@@ -2,19 +2,23 @@
 //  ADConfig.swift
 //  AD Toolkit
 //
-//  Centralized configuration for Active Directory integration.
-//  Set these values to match your AD infrastructure before deploying.
+//  DEPRECATED: Use ConfigManager.shared.config instead.
+//  Will be removed in a future version.
 //
-//  Security: Do NOT commit real credentials or internal server names.
-//  These values are placeholders — replace them in your local build.
+//  Previously: Centralized configuration for Active Directory integration.
+//  Now acts as fallback constants when no runtime config is stored.
 //
 
 import Foundation
 
 /// Active Directory configuration constants.
 ///
-/// All values are intentionally left as placeholders.
-/// Configure them for your environment before building.
+/// DEPRECATED: Use `ConfigManager.shared.config` with fallback:
+/// `ConfigManager.shared.config?.domain ?? ADConfig.domain`
+///
+/// These constants remain as fallback during the transition period.
+/// They will be removed once all users have migrated to Keychain-stored config.
+@available(*, deprecated, message: "Use ConfigManager.shared.config instead")
 enum ADConfig {
     /// AD domain in lowercase (e.g., "company.local")
     static let domain = "company.local"
