@@ -8,6 +8,7 @@
 //
 
 import Foundation
+import OSLog
 
 /// Service that communicates with the privileged helper tool via XPC.
 ///
@@ -17,7 +18,8 @@ class XPCService {
 
     private var connection: NSXPCConnection?
 
-    private func connect() -> ADToolkitXPCProtocol? {
+    /// Ensure the XPC connection exists and return it.
+    private func ensureConnection() -> NSXPCConnection? {
         if connection == nil {
             let newConnection = NSXPCConnection(machServiceName: "com.cisa.ad-toolkit.helper")
             newConnection.remoteObjectInterface = NSXPCInterface(with: ADToolkitXPCProtocol.self)
@@ -30,24 +32,46 @@ class XPCService {
             newConnection.resume()
             connection = newConnection
         }
+        return connection
+    }
 
-        return connection?.remoteObjectProxy as? ADToolkitXPCProtocol
+    /// Get proxy for callback-based XPC calls.
+    /// Uses `remoteObjectProxyWithErrorHandler` to avoid silently dropping messages.
+    private func connect() -> ADToolkitXPCProtocol? {
+        guard let connection = ensureConnection() else { return nil }
+        return connection.remoteObjectProxyWithErrorHandler { error in
+            os_log(.error, "XPC remoteObjectProxy error: %{public}@", error.localizedDescription)
+        } as? ADToolkitXPCProtocol
+    }
+
+    /// Get proxy for async XPC calls with an error handler that resumes the continuation.
+    private func proxyWithErrorHandler(_ onError: @escaping (String) -> Void) -> ADToolkitXPCProtocol? {
+        guard let connection = ensureConnection() else { return nil }
+        return connection.remoteObjectProxyWithErrorHandler { error in
+            onError("XPC connection error: \(error.localizedDescription)")
+        } as? ADToolkitXPCProtocol
     }
 
     // MARK: - Diagnostics
 
-    func runDiagnostics(reply: @escaping ([String: String]) -> Void) {
+    func runDiagnostics(domain: String,
+                        dcHost: String,
+                        defaultOU: String,
+                        reply: @escaping ([String: String]) -> Void) {
         guard let proxy = connect() else {
             reply(["error": "No se pudo conectar con el helper tool. Verificá que esté instalado en Settings > Login Items."])
             return
         }
-        proxy.runDiagnostics(reply: reply)
+        proxy.runDiagnostics(domain: domain, dcHost: dcHost, defaultOU: defaultOU, reply: reply)
     }
 
     // MARK: - Domain Join
 
     func joinDomain(computerName: String,
+                    domain: String,
+                    dcHost: String,
                     ou: String,
+                    defaultOU: String,
                     adminUser: String,
                     adminPass: String,
                     reply: @escaping (Bool, String?) -> Void) {
@@ -56,13 +80,19 @@ class XPCService {
             return
         }
         proxy.joinDomain(computerName: computerName,
+                          domain: domain,
+                          dcHost: dcHost,
                           ou: ou,
+                          defaultOU: defaultOU,
                           adminUser: adminUser,
                           adminPass: adminPass,
                           reply: reply)
     }
 
     func leaveDomain(computerName: String,
+                     domain: String,
+                     dcHost: String,
+                     defaultOU: String,
                      adminUser: String,
                      adminPass: String,
                      reply: @escaping (Bool, String?) -> Void) {
@@ -71,6 +101,9 @@ class XPCService {
             return
         }
         proxy.leaveDomain(computerName: computerName,
+                          domain: domain,
+                          dcHost: dcHost,
+                          defaultOU: defaultOU,
                           adminUser: adminUser,
                           adminPass: adminPass,
                           reply: reply)
@@ -114,11 +147,18 @@ class XPCService {
     /// - Returns: JSON-encoded ADConfigModel data, or nil + error string.
     func detectADConfig() async -> (data: Data?, error: String?) {
         await withCheckedContinuation { continuation in
-            guard let proxy = connect() else {
+            var hasResumed = false
+            guard let proxy = proxyWithErrorHandler({ error in
+                guard !hasResumed else { return }
+                hasResumed = true
+                continuation.resume(returning: (nil, error))
+            }) else {
                 continuation.resume(returning: (nil, "No se pudo conectar con el helper tool."))
                 return
             }
             proxy.detectADConfig { data, error in
+                guard !hasResumed else { return }
+                hasResumed = true
                 continuation.resume(returning: (data, error))
             }
         }
@@ -128,11 +168,18 @@ class XPCService {
     /// - Returns: JSON-encoded ADConfigModel data, or nil + error string.
     func loadADConfig() async -> (data: Data?, error: String?) {
         await withCheckedContinuation { continuation in
-            guard let proxy = connect() else {
+            var hasResumed = false
+            guard let proxy = proxyWithErrorHandler({ error in
+                guard !hasResumed else { return }
+                hasResumed = true
+                continuation.resume(returning: (nil, error))
+            }) else {
                 continuation.resume(returning: (nil, "No se pudo conectar con el helper tool."))
                 return
             }
             proxy.loadADConfig { data, error in
+                guard !hasResumed else { return }
+                hasResumed = true
                 continuation.resume(returning: (data, error))
             }
         }
@@ -143,11 +190,18 @@ class XPCService {
     /// - Returns: Success boolean + optional error string.
     func saveADConfig(_ configData: Data) async -> (success: Bool, error: String?) {
         await withCheckedContinuation { continuation in
-            guard let proxy = connect() else {
+            var hasResumed = false
+            guard let proxy = proxyWithErrorHandler({ error in
+                guard !hasResumed else { return }
+                hasResumed = true
+                continuation.resume(returning: (false, error))
+            }) else {
                 continuation.resume(returning: (false, "No se pudo conectar con el helper tool."))
                 return
             }
             proxy.saveADConfig(configData) { success, error in
+                guard !hasResumed else { return }
+                hasResumed = true
                 continuation.resume(returning: (success, error))
             }
         }

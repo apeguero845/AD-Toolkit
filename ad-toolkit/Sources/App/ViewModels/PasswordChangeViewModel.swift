@@ -155,17 +155,27 @@ class PasswordChangeViewModel: ObservableObject {
                     self.appendLog("⚠︎ Keychain: \(keychainMessage)")
                 }
 
-                self.isSuccess = true
-                self.resultMessage = "Contraseña cambiada correctamente.\n"
-                    + "✓ AD actualizado\n"
-                    + (localSyncSuccess ? "✓ Cuenta local sincronizada\n" : "⚠︎ Sync local pendiente\n")
-                    + (keychainSuccess ? "✓ Llavero actualizado" : "⚠︎ Llavero: \(keychainMessage)")
+                // isSuccess = true only if ALL required steps succeeded
+                let allStepsSucceeded = localSyncSuccess && keychainSuccess
+                self.isSuccess = allStepsSucceeded
 
-                if !keychainSuccess {
-                    self.resultMessage? += "\n\nPodés actualizar el llavero manualmente desde Keychain Access."
+                if allStepsSucceeded {
+                    self.resultMessage = "Contraseña cambiada correctamente.\n"
+                        + "✓ AD actualizado\n"
+                        + "✓ Cuenta local sincronizada\n"
+                        + "✓ Llavero actualizado"
+                } else {
+                    var msg = "Contraseña cambiada en AD correctamente.\n"
+                    msg += "✓ AD actualizado\n"
+                    msg += localSyncSuccess ? "✓ Cuenta local sincronizada\n" : "⚠︎ Sync local pendiente\n"
+                    msg += keychainSuccess ? "✓ Llavero actualizado" : "⚠︎ Llavero: \(keychainMessage)"
+                    if !keychainSuccess {
+                        msg += "\n\nPodés actualizar el llavero manualmente desde Keychain Access."
+                    }
+                    self.resultMessage = msg
                 }
 
-                self.appendLog("✓ Proceso completado.")
+                self.appendLog(allStepsSucceeded ? "✓ Proceso completado." : "⚠︎ Proceso completado con advertencias.")
                 self.isLoading = false
 
                 // Clear sensitive data

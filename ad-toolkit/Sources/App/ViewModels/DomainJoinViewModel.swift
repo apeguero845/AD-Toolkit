@@ -48,7 +48,10 @@ class DomainJoinViewModel: ObservableObject {
         diagnosticsResults = [:]
 
         let xpc = XPCService()
-        xpc.runDiagnostics { results in
+        let domain = ConfigManager.shared.config?.domain ?? ADConfig.domain
+        let dcHost = ConfigManager.shared.config?.dcHost ?? ""
+        let defaultOU = ConfigManager.shared.config?.defaultOU ?? ADConfig.defaultOU
+        xpc.runDiagnostics(domain: domain, dcHost: dcHost, defaultOU: defaultOU) { results in
             DispatchQueue.main.async {
                 self.diagnosticsResults = results
                 self.isLoading = false
@@ -62,8 +65,14 @@ class DomainJoinViewModel: ObservableObject {
         resultMessage = nil
 
         let xpc = XPCService()
+        let domain = ConfigManager.shared.config?.domain ?? ADConfig.domain
+        let dcHost = ConfigManager.shared.config?.dcHost ?? ""
+        let defaultOU = ConfigManager.shared.config?.defaultOU ?? ADConfig.defaultOU
         xpc.joinDomain(computerName: computerName,
+                       domain: domain,
+                       dcHost: dcHost,
                        ou: ouPath,
+                       defaultOU: defaultOU,
                        adminUser: adminUser,
                        adminPass: adminPass) { success, message in
             DispatchQueue.main.async {
@@ -82,7 +91,13 @@ class DomainJoinViewModel: ObservableObject {
         resultMessage = nil
 
         let xpc = XPCService()
+        let domain = ConfigManager.shared.config?.domain ?? ADConfig.domain
+        let dcHost = ConfigManager.shared.config?.dcHost ?? ""
+        let defaultOU = ConfigManager.shared.config?.defaultOU ?? ADConfig.defaultOU
         xpc.leaveDomain(computerName: computerName,
+                        domain: domain,
+                        dcHost: dcHost,
+                        defaultOU: defaultOU,
                         adminUser: adminUser,
                         adminPass: adminPass) { success, message in
             DispatchQueue.main.async {

@@ -15,6 +15,10 @@ import Foundation
 /// The fallback chain is: Keychain → auto-detect → ADConfig constants → nil.
 /// On first access, loadConfig() should be called at app launch to populate
 /// the cache from the system Keychain.
+///
+/// Marked @MainActor because `cachedConfig` is read from SwiftUI views
+/// and written from Task contexts — the actor guarantees single-threaded access.
+@MainActor
 class ConfigManager {
 
     // MARK: - Singleton

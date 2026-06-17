@@ -15,12 +15,6 @@ import Foundation
 
 class HelperToolDelegate: NSObject, NSXPCListenerDelegate {
 
-    /// Expected bundle ID for the calling app
-    private let expectedAppBundleID = "com.cisa.ad-toolkit"
-
-    /// Minimum app version allowed to connect
-    private let minimumAppVersion = "1.0.0"
-
     func listener(_ listener: NSXPCListener,
                   shouldAcceptNewConnection newConnection: NSXPCConnection) -> Bool {
         // In debug builds, accept all connections for development convenience
@@ -55,13 +49,11 @@ class HelperToolDelegate: NSObject, NSXPCListenerDelegate {
     /// - Parameter connection: The incoming XPC connection
     /// - Returns: true if the connection is from a trusted app
     private func validateConnection(_ connection: NSXPCConnection) -> Bool {
-        let pid = connection.processIdentifier
-        guard pid > 0 else { return false }
-
-        // Create a SecCode from the process PID
-        let pidAttribute = [kSecGuestAttributePid: pid] as CFDictionary
+        // Use audit token instead of PID to avoid TOCTOU race with PID reuse
+        let attr = withUnsafeBytes(of: connection.auditToken) { Data($0) }
+        let auditAttribute = [kSecGuestAttributeAudit: attr] as CFDictionary
         var staticCode: SecCode?
-        let status = SecCodeCopyGuestWithAttributes(nil, pidAttribute, [], &staticCode)
+        let status = SecCodeCopyGuestWithAttributes(nil, auditAttribute, [], &staticCode)
 
         guard status == errSecSuccess, let code = staticCode else {
             return false

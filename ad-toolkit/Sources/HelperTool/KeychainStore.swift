@@ -49,6 +49,15 @@ class KeychainStore {
 
     private init() {}
 
+    // MARK: - Thread Safety
+
+    /// Serial queue for atomic CRUD operations to prevent race conditions
+    /// between delete-then-add in save() and concurrent calls from XPC.
+    private let queue = DispatchQueue(label: "com.cisa.ad-toolkit.keychain",
+                                     qos: .default,
+                                     attributes: [],
+                                     autoreleaseFrequency: .workItem)
+
     // MARK: - Constants
 
     private let service = "com.cisa.ad-toolkit.ad-config"
@@ -64,23 +73,32 @@ class KeychainStore {
     /// - Parameter config: The model to persist
     /// - Throws: `KeychainError.saveFailed` if SecItemAdd fails
     func save(_ config: ADConfigModel) throws {
-        let data = try JSONEncoder().encode(config)
+        var configError: Error?
+        queue.sync {
+            do {
+                let data = try JSONEncoder().encode(config)
 
-        // Remove any existing item first
-        delete()
+                // Remove any existing item first (internal — already on serial queue)
+                try _delete()
 
-        let query: [String: Any] = [
-            kSecClass as String: kSecClassGenericPassword,
-            kSecAttrService as String: service,
-            kSecAttrAccount as String: account,
-            kSecAttrAccessible as String: kSecAttrAccessibleAfterFirstUnlockThisDeviceOnly,
-            kSecValueData as String: data
-        ]
+                let query: [String: Any] = [
+                    kSecClass as String: kSecClassGenericPassword,
+                    kSecAttrService as String: service,
+                    kSecAttrAccount as String: account,
+                    kSecUseDataProtectionKeychain as String: true,
+                    kSecAttrAccessible as String: kSecAttrAccessibleAfterFirstUnlockThisDeviceOnly,
+                    kSecValueData as String: data
+                ]
 
-        let status = SecItemAdd(query as CFDictionary, nil)
-        guard status == errSecSuccess else {
-            throw KeychainError.saveFailed(status: status)
+                let status = SecItemAdd(query as CFDictionary, nil)
+                guard status == errSecSuccess else {
+                    throw KeychainError.saveFailed(status: status)
+                }
+            } catch {
+                configError = error
+            }
         }
+        if let error = configError { throw error }
     }
 
     /// Load the ADConfigModel from the system Keychain.
@@ -88,38 +106,51 @@ class KeychainStore {
     /// - Returns: The decoded `ADConfigModel`
     /// - Throws: `KeychainError.loadFailed` on failure (including item not found)
     func load() throws -> ADConfigModel {
-        let query: [String: Any] = [
-            kSecClass as String: kSecClassGenericPassword,
-            kSecAttrService as String: service,
-            kSecAttrAccount as String: account,
-            kSecReturnData as String: true,
-            kSecMatchLimit as String: kSecMatchLimitOne
-        ]
+        return try queue.sync {
+            let query: [String: Any] = [
+                kSecClass as String: kSecClassGenericPassword,
+                kSecAttrService as String: service,
+                kSecAttrAccount as String: account,
+                kSecUseDataProtectionKeychain as String: true,
+                kSecReturnData as String: true,
+                kSecMatchLimit as String: kSecMatchLimitOne
+            ]
 
-        var result: AnyObject?
-        let status = SecItemCopyMatching(query as CFDictionary, &result)
+            var result: AnyObject?
+            let status = SecItemCopyMatching(query as CFDictionary, &result)
 
-        guard status == errSecSuccess, let data = result as? Data else {
-            throw KeychainError.loadFailed(status: status)
+            guard status == errSecSuccess, let data = result as? Data else {
+                throw KeychainError.loadFailed(status: status)
+            }
+
+            return try JSONDecoder().decode(ADConfigModel.self, from: data)
         }
-
-        return try JSONDecoder().decode(ADConfigModel.self, from: data)
     }
 
     /// Delete the AD config entry from the system Keychain.
     ///
     /// This is a no-op if no entry exists (SecItemDelete returns
     /// errSecItemNotFound, which we ignore).
-    func delete() {
+    /// Internal delete — no queue synchronization.
+    /// Call only from within `queue.sync` (e.g., via `save()`) or wrap externally.
+    private func _delete() throws {
         let query: [String: Any] = [
             kSecClass as String: kSecClassGenericPassword,
             kSecAttrService as String: service,
-            kSecAttrAccount as String: account
+            kSecAttrAccount as String: account,
+            kSecUseDataProtectionKeychain as String: true
         ]
         let status = SecItemDelete(query as CFDictionary)
         // errSecItemNotFound is acceptable — nothing to delete
         guard status == errSecSuccess || status == errSecItemNotFound else {
-            return
+            throw KeychainError.deleteFailed(status: status)
+        }
+    }
+
+    /// Thread-safe delete wrapping `_delete()` through the serial queue.
+    func delete() throws {
+        try queue.sync {
+            try _delete()
         }
     }
 }

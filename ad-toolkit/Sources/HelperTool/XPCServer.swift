@@ -19,25 +19,28 @@ class XPCServer: NSObject, ADToolkitXPCProtocol {
 
     // MARK: - Diagnostics
 
-    func runDiagnostics(reply: @escaping ([String: String]) -> Void) {
+    func runDiagnostics(domain: String,
+                        dcHost: String,
+                        defaultOU: String,
+                        reply: @escaping ([String: String]) -> Void) {
         var results: [String: String] = [:]
 
         // 1. DNS resolution via SRV record (authoritative for AD)
-        let dnsSRV = run("host -t SRV _ldap._tcp.dc._msdcs.\(ADConfig.domain)")
+        let dnsSRV = run("host -t SRV _ldap._tcp.dc._msdcs.'\(domain.escapingSingleQuotes)'")
         results["dns"] = dnsSRV == nil ? "fail" : "pass"
 
         // 2. Time sync check
-        let timeResult = run("sntp \(ADConfig.dcIP)")
+        let timeResult = run("sntp '\(dcHost.escapingSingleQuotes)'")
         results["time"] = (timeResult?.contains("adjust") ?? false ||
                            timeResult?.contains("step") ?? false ||
                            timeResult?.contains("no change") ?? false) ? "pass" : "fail"
 
         // 3. LDAP reachability
-        let ldapResult = run("ldapsearch -H ldap://\(ADConfig.domain) -x -b '' -s base 'objectclass=*' namingContexts 2>/dev/null")
+        let ldapResult = run("ldapsearch -H ldap://'\(domain.escapingSingleQuotes)' -x -b '' -s base 'objectclass=*' namingContexts 2>/dev/null")
         results["ldap"] = (ldapResult?.contains("namingContexts") ?? false) ? "pass" : "fail"
 
         // 4. Kerberos KDC port check (tcp/464)
-        let kdcResult = run("nc -z -w 3 \(ADConfig.dcIP) 464 2>&1")
+        let kdcResult = run("nc -z -w 3 '\(dcHost.escapingSingleQuotes)' 464 2>&1")
         results["kdc"] = (kdcResult?.contains("succeeded") ?? false || kdcResult?.isEmpty ?? false) ? "pass" : "fail"
 
         // 5. Current bind status
@@ -50,21 +53,25 @@ class XPCServer: NSObject, ADToolkitXPCProtocol {
     // MARK: - Domain Join
 
     func joinDomain(computerName: String,
+                    domain: String,
+                    dcHost: String,
                     ou: String,
+                    defaultOU: String,
                     adminUser: String,
                     adminPass: String,
                     reply: @escaping (Bool, String?) -> Void) {
-        let resolvedOU = ou.isEmpty ? ADConfig.defaultOU : ou
+        let resolvedOU = ou.isEmpty ? defaultOU : ou
 
         // Pass the admin password via environment variable (not CLI arg)
         let env = ["ADMIN_PASSWORD": adminPass]
+        let dcHostFlag = dcHost.isEmpty ? "" : " -server '\(dcHost.escapingSingleQuotes)'"
         let result = runWithEnv(
-            "dsconfigad -add \(ADConfig.domain) "
+            "dsconfigad -add '\(domain.escapingSingleQuotes)' "
             + "-computer '\(computerName.escapingSingleQuotes)' "
             + "-username '\(adminUser.escapingSingleQuotes)' "
             + "-ou '\(resolvedOU.escapingSingleQuotes)' "
             + "-passenv ADMIN_PASSWORD "
-            + "-force 2>&1",
+            + "-force\(dcHostFlag) 2>&1",
             environment: env
         )
 
@@ -74,7 +81,7 @@ class XPCServer: NSObject, ADToolkitXPCProtocol {
         }
 
         if output.contains("success") || output.contains("already") {
-            reply(true, "✅ Equipo unido al dominio exitosamente.\nDominio: \(ADConfig.domain)\nOU: \(resolvedOU)")
+            reply(true, "✅ Equipo unido al dominio exitosamente.\nDominio: \(domain)\nOU: \(resolvedOU)")
         } else if output.contains("Container does not exist") {
             reply(false, "❌ La OU especificada no existe en AD.\n"
                 + "Formato esperado: OU=Computers,DC=company,DC=local\n"
@@ -95,15 +102,19 @@ class XPCServer: NSObject, ADToolkitXPCProtocol {
     // MARK: - Leave Domain
 
     func leaveDomain(computerName: String,
+                     domain: String,
+                     dcHost: String,
+                     defaultOU: String,
                      adminUser: String,
                      adminPass: String,
                      reply: @escaping (Bool, String?) -> Void) {
         let env = ["ADMIN_PASSWORD": adminPass]
+        let dcHostFlag = dcHost.isEmpty ? "" : " -server '\(dcHost.escapingSingleQuotes)'"
         let result = runWithEnv(
             "dsconfigad -remove -force "
             + "-computer '\(computerName.escapingSingleQuotes)' "
             + "-username '\(adminUser.escapingSingleQuotes)' "
-            + "-passenv ADMIN_PASSWORD 2>&1",
+            + "-passenv ADMIN_PASSWORD\(dcHostFlag) 2>&1",
             environment: env
         )
 
@@ -171,19 +182,29 @@ class XPCServer: NSObject, ADToolkitXPCProtocol {
             return
         }
 
-        // Use Process to call `security set-keychain-password` with direct arguments.
-        // SecKeychainChangePassword was removed from Security.framework on macOS 13+,
-        // and the security CLI now accepts old/new password as arguments.
-        // Process arguments on macOS are only visible to the same UID — we run as root,
-        // so regular users cannot see them via `ps`.
+        // Use Process to call `security set-keychain-password`.
+        // SecKeychainChangePassword was removed from Security.framework on macOS 13+.
+        // Passwords are piped via stdin to prevent credential leakage in process
+        // listings (`ps -ef`, crash reports, etc.).
         let task = Process()
         let outPipe = Pipe()
+        let inPipe = Pipe()
         task.executableURL = URL(fileURLWithPath: "/usr/bin/security")
-        task.arguments = ["set-keychain-password", "-k", keychainPath, oldPassword, newPassword]
+        task.arguments = ["set-keychain-password", keychainPath]
         task.standardOutput = outPipe
         task.standardError = outPipe
+        task.standardInput = inPipe
+
+        // Write passwords to stdin pipe (old + new + confirm) instead of CLI args
+        let passwordPayload = "\(oldPassword)\n\(newPassword)\n\(newPassword)\n"
+        guard let pwData = passwordPayload.data(using: .utf8) else {
+            reply(false, "Error de codificación")
+            return
+        }
+        inPipe.fileHandleForWriting.write(pwData)
 
         do {
+            try inPipe.fileHandleForWriting.close()
             try task.run()
             task.waitUntilExit()
 
@@ -325,6 +346,8 @@ class XPCServer: NSObject, ADToolkitXPCProtocol {
         do {
             try task.run()
             task.waitUntilExit()
+
+            guard task.terminationStatus == 0 else { return nil }
 
             let data = pipe.fileHandleForReading.readDataToEndOfFile()
             let output = String(data: data, encoding: .utf8)?

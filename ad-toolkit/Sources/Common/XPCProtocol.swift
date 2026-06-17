@@ -3,13 +3,19 @@ import Foundation
 @objc protocol ADToolkitXPCProtocol {
     // Domain join
     func joinDomain(computerName: String,
+                    domain: String,
+                    dcHost: String,
                     ou: String,
+                    defaultOU: String,
                     adminUser: String,
                     adminPass: String,
                     reply: @escaping (Bool, String?) -> Void)
 
     // Remove from domain
     func leaveDomain(computerName: String,
+                     domain: String,
+                     dcHost: String,
+                     defaultOU: String,
                      adminUser: String,
                      adminPass: String,
                      reply: @escaping (Bool, String?) -> Void)
@@ -27,7 +33,10 @@ import Foundation
                       reply: @escaping (Bool, String?) -> Void)
 
     // Run pre-flight diagnostics
-    func runDiagnostics(reply: @escaping ([String: String]) -> Void)
+    func runDiagnostics(domain: String,
+                        dcHost: String,
+                        defaultOU: String,
+                        reply: @escaping ([String: String]) -> Void)
 
     // MARK: - AD Config (Phase 1)
 

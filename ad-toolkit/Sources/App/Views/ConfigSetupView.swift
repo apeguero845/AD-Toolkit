@@ -323,7 +323,7 @@ struct ConfigSetupView: View {
         let model = ADConfigModel(
             domain: manualDomain,
             dcHost: manualDcHost,
-            defaultOU: manualDefaultOU.isEmpty ? "OU=Computers,\(manualDomain.replacingOccurrences(of: ".", with: ",DC="))" : manualDefaultOU,
+            defaultOU: manualDefaultOU.isEmpty ? "OU=Computers,\(manualDomain.components(separatedBy: ".").map { "DC=\($0)" }.joined(separator: ","))" : manualDefaultOU,
             forest: nil,
             isAutoDetected: false
         )

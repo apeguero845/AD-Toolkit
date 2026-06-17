@@ -36,7 +36,12 @@ struct ADToolkitApp: App {
                 .task {
                     // Load stored config from Keychain on launch — non-blocking.
                     // If no config is found, the ConfigSetupView sheet will appear.
-                    try? await ConfigManager.shared.loadConfig()
+                    do {
+                        try await ConfigManager.shared.loadConfig()
+                    } catch {
+                        os_log(.error, "ConfigManager.loadConfig failed: %{public}@",
+                               error.localizedDescription)
+                    }
                     if !ConfigManager.shared.isConfigured {
                         showConfigSheet = true
                     }
