@@ -33,7 +33,7 @@ class XPCServer: NSObject, ADToolkitXPCProtocol {
                            timeResult?.contains("no change") ?? false) ? "pass" : "fail"
 
         // 3. LDAP reachability
-        let ldapResult = run("ldapsearch -H ldap://\(domain) -x -b '' -s base 'objectclass=*' namingContexts 2>/dev/null")
+        let ldapResult = run("ldapsearch -H ldap://\(ADConfig.domain) -x -b '' -s base 'objectclass=*' namingContexts 2>/dev/null")
         results["ldap"] = (ldapResult?.contains("namingContexts") ?? false) ? "pass" : "fail"
 
         // 4. Kerberos KDC port check (tcp/464)
