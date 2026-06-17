@@ -20,6 +20,10 @@
 #import <stdlib.h>
 #import <string.h>
 
+/// Kerberos password change result codes (Heimdal KPASSWD protocol)
+#define KPASSWD_ACCESSDENIED  4   // Wrong password or policy violation
+#define KPASSWD_SOFTERROR     3   // Temporary KDC issue
+
 gss_password_change_result_t gss_change_password(
     const char *userPrincipal,
     const char *oldPassword,
@@ -87,7 +91,9 @@ gss_password_change_result_t gss_change_password(
         result.error_message = NULL;
     } else {
         result.kerberos_error_code = (int)majorStatus;
-        
+
+        // Try to extract the underlying Kerberos error code from the CFError
+        int kpasswdErrorCode = -1;
         if (error) {
             CFStringRef errorDesc = CFErrorCopyDescription(error);
             if (errorDesc) {
@@ -95,6 +101,12 @@ gss_password_change_result_t gss_change_password(
                 CFStringGetCString(errorDesc, errorBuf, sizeof(errorBuf),
                                    kCFStringEncodingUTF8);
                 result.error_message = strdup(errorBuf);
+
+                // Parse trailing ": N" — the Kerberos password change result code
+                char *colon = strrchr(errorBuf, ':');
+                if (colon && atoi(colon + 1) > 0) {
+                    kpasswdErrorCode = atoi(colon + 1);
+                }
                 CFRelease(errorDesc);
             }
             CFRelease(error);
@@ -102,18 +114,38 @@ gss_password_change_result_t gss_change_password(
 
         // Map known error codes to user-friendly messages
         if (majorStatus == GSS_S_FAILURE) {
-            if (result.error_message == NULL || result.error_message[0] == '\0') {
+            if (kpasswdErrorCode == KPASSWD_ACCESSDENIED) {
+                // :4 = KRB5_KPASSWD_ACCESSDENIED
+                // Could be wrong password OR password complexity violation.
+                // Can't tell which from Kerberos alone — suggest both.
                 free((void *)result.error_message);
-                result.error_message = strdup("Error de autenticación Kerberos. "
-                    "Verificá que la contraseña actual sea correcta.");
-            } else {
-                // Preserve the specific CFError description and append guidance
+                result.error_message = strdup(
+                    "La contraseña actual no es correcta o la nueva contraseña "
+                    "no cumple con las políticas de seguridad del dominio. "
+                    "Verificá la contraseña actual e intentá con una nueva "
+                    "contraseña que cumpla: 8+ caracteres, mayúscula, minúscula, "
+                    "número y carácter especial.");
+            } else if (kpasswdErrorCode == KPASSWD_SOFTERROR) {
+                // :3 = KRB5_KPASSWD_SOFTERROR — temporary KDC issue
+                free((void *)result.error_message);
+                result.error_message = strdup(
+                    "El servidor de dominio reportó un error temporal. "
+                    "Esperá unos minutos e intentá de nuevo. "
+                    "Si el error persiste, verificá que el KDC (puerto 464) "
+                    "esté accesible desde esta Mac.");
+            } else if (result.error_message && result.error_message[0] != '\0') {
+                // Unknown error — preserve raw description with generic guidance
                 const char *original = result.error_message;
-                size_t len = strlen(original) + 100;
+                size_t len = strlen(original) + 80;
                 char *enhanced = (char *)malloc(len);
-                snprintf(enhanced, len, "%s — Verificá que la contraseña actual sea correcta.", original);
+                snprintf(enhanced, len, "%s — Contactá al administrador de TI.", original);
                 free((void *)original);
                 result.error_message = enhanced;
+            } else {
+                // No error description available — generic fallback
+                result.error_message = strdup(
+                    "Error al cambiar la contraseña. "
+                    "Verificá la conexión de red y que el dominio sea accesible.");
             }
         }
     }
