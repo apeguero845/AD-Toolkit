@@ -21,6 +21,8 @@ targets:
       - path: Sources/GSSBridge
         type: group
         buildPhase: sources
+      - path: Resources/Assets.xcassets
+        type: folder
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.cisa.ad-toolkit
