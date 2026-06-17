@@ -107,4 +107,49 @@ class XPCService {
                             newPassword: newPassword,
                             reply: reply)
     }
+
+    // MARK: - AD Config (Phase 1)
+
+    /// Detect AD configuration via dsconfigad on the Helper Tool.
+    /// - Returns: JSON-encoded ADConfigModel data, or nil + error string.
+    func detectADConfig() async -> (data: Data?, error: String?) {
+        await withCheckedContinuation { continuation in
+            guard let proxy = connect() else {
+                continuation.resume(returning: (nil, "No se pudo conectar con el helper tool."))
+                return
+            }
+            proxy.detectADConfig { data, error in
+                continuation.resume(returning: (data, error))
+            }
+        }
+    }
+
+    /// Load AD configuration from the system Keychain via the Helper Tool.
+    /// - Returns: JSON-encoded ADConfigModel data, or nil + error string.
+    func loadADConfig() async -> (data: Data?, error: String?) {
+        await withCheckedContinuation { continuation in
+            guard let proxy = connect() else {
+                continuation.resume(returning: (nil, "No se pudo conectar con el helper tool."))
+                return
+            }
+            proxy.loadADConfig { data, error in
+                continuation.resume(returning: (data, error))
+            }
+        }
+    }
+
+    /// Save AD configuration to the system Keychain via the Helper Tool.
+    /// - Parameter configData: JSON-encoded ADConfigModel data.
+    /// - Returns: Success boolean + optional error string.
+    func saveADConfig(_ configData: Data) async -> (success: Bool, error: String?) {
+        await withCheckedContinuation { continuation in
+            guard let proxy = connect() else {
+                continuation.resume(returning: (false, "No se pudo conectar con el helper tool."))
+                return
+            }
+            proxy.saveADConfig(configData) { success, error in
+                continuation.resume(returning: (success, error))
+            }
+        }
+    }
 }

@@ -200,6 +200,98 @@ class XPCServer: NSObject, ADToolkitXPCProtocol {
         }
     }
 
+    // MARK: - AD Config Detection
+
+    func detectADConfig(reply: @escaping (Data?, String?) -> Void) {
+        let output = run("dsconfigad -show 2>&1")
+
+        guard let output = output, !output.isEmpty else {
+            reply(nil, "No se pudo detectar configuración AD. El equipo no está unido al dominio.")
+            return
+        }
+
+        guard output.contains("Active Directory Domain") else {
+            reply(nil, "No se pudo detectar configuración AD. El equipo no está unido al dominio.")
+            return
+        }
+
+        var domain: String?
+        var forest: String?
+        var defaultOU: String?
+        var dcHost: String?
+
+        let lines = output.components(separatedBy: .newlines)
+        for line in lines {
+            let parts = line.components(separatedBy: ": ")
+            guard parts.count >= 2 else { continue }
+            let key = parts[0].trimmingCharacters(in: .whitespaces)
+            let value = parts[1...].joined(separator: ": ").trimmingCharacters(in: .whitespaces)
+
+            switch key {
+            case "Active Directory Domain":
+                domain = value
+            case "Active Directory Forest":
+                forest = value
+            case "Default Computer Container":
+                defaultOU = value
+            case "Preferred Domain controller":
+                dcHost = value
+            default:
+                break
+            }
+        }
+
+        guard let resolvedDomain = domain, let resolvedDCHost = dcHost else {
+            reply(nil, "No se pudieron leer todos los campos necesarios de dsconfigad.")
+            return
+        }
+
+        let model = ADConfigModel(
+            domain: resolvedDomain,
+            dcHost: resolvedDCHost,
+            defaultOU: defaultOU ?? "",
+            forest: forest,
+            isAutoDetected: true
+        )
+
+        do {
+            let data = try JSONEncoder().encode(model)
+            reply(data, nil)
+        } catch {
+            reply(nil, "Error al codificar la configuración AD: \(error.localizedDescription)")
+        }
+    }
+
+    // MARK: - AD Config Keychain
+
+    func loadADConfig(reply: @escaping (Data?, String?) -> Void) {
+        do {
+            let config = try KeychainStore.shared.load()
+            let data = try JSONEncoder().encode(config)
+            reply(data, nil)
+        } catch let error as KeychainError {
+            if case .loadFailed(let status) = error, status == errSecItemNotFound {
+                reply(nil, nil) // No config stored yet — not an error
+            } else {
+                reply(nil, error.localizedDescription)
+            }
+        } catch {
+            reply(nil, "Error al cargar configuración AD: \(error.localizedDescription)")
+        }
+    }
+
+    func saveADConfig(_ configData: Data, reply: @escaping (Bool, String?) -> Void) {
+        do {
+            let config = try JSONDecoder().decode(ADConfigModel.self, from: configData)
+            try KeychainStore.shared.save(config)
+            reply(true, nil)
+        } catch let error as KeychainError {
+            reply(false, error.localizedDescription)
+        } catch {
+            reply(false, "Error al guardar configuración AD: \(error.localizedDescription)")
+        }
+    }
+
     // MARK: - Private Helpers
 
     /// Run a shell command with no custom environment.
